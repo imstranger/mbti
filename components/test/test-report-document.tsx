@@ -297,6 +297,7 @@ export default function TestReportDocument(props: TestReportDocumentProps) {
       >
         <Text
           fontSize="xs"
+          lineHeight="2"
           color="gray.500"
         >
           本报告基于 MBTI 自评问卷结果生成，仅供自我探索与参考，不构成心理诊断或任何专业评估。
