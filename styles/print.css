@@ -1,0 +1,47 @@
+/* 打印 / 导出 PDF 专用样式
+   屏幕上不显示报告，导出时隐藏整个应用外壳，只输出报告正文 */
+
+#print-report {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 导航、按钮、侧栏、内容区等全部隐藏 */
+  #app-shell {
+    display: none !important;
+  }
+
+  /* 只输出报告 */
+  #print-report {
+    display: block !important;
+    color: #111111 !important;
+    background: #ffffff !important;
+  }
+
+  /* 标题不要落在页尾，正文/列表项尽量不跨页 */
+  #print-report h1,
+  #print-report h2,
+  #print-report h3 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  #print-report p,
+  #print-report li,
+  #print-report tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
