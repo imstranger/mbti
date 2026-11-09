@@ -2,7 +2,9 @@ import Link from "next/link";
 import { MouseEvent, useState, useEffect } from "react";
 import { Flex, Text, UnorderedList, ListItem } from "@chakra-ui/react";
 
-import useHeadingsObserver from "../../hooks/use-headings-observer";
+import useHeadingsObserver, {
+  getVisibleReportHeadings,
+} from "../../hooks/use-headings-observer";
 
 export default function TestResultTableOfContent() {
   const { activeId, setActiveId } = useHeadingsObserver();
@@ -15,12 +17,17 @@ export default function TestResultTableOfContent() {
   >([]);
 
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll("h2")).map(
-      (element) => ({
+    const seen = new Set<string>();
+    const elements = getVisibleReportHeadings()
+      .map((element) => ({
         id: element.id,
         text: element.textContent!,
-      })
-    );
+      }))
+      .filter((heading) => {
+        if (seen.has(heading.id)) return false;
+        seen.add(heading.id);
+        return true;
+      });
 
     setHeadings(elements);
   }, []);
