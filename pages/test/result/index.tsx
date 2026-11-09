@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Option, AsyncData, Result } from "@swan-io/boxed";
@@ -10,8 +11,10 @@ import TestResultStats from "../../../components/test/test-result-stats";
 import TestResultTableOfContent from "../../../components/test/test-result-table-of-content";
 import {
   TestResult as ITestResult,
+  getPersonalityClassGroupByTestScores,
   getSavedTestResult,
 } from "../../../lib/personality-test";
+import { downloadReportPdf } from "../../../lib/report-pdf";
 
 export default function TestResultPage() {
   const router = useRouter();
@@ -19,6 +22,9 @@ export default function TestResultPage() {
   const [testResult, setTestResult] = useState<
     AsyncData<Result<Option<ITestResult>, Error>>
   >(AsyncData.NotAsked());
+
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     if (router.isReady) {
@@ -43,8 +49,30 @@ export default function TestResultPage() {
       }),
   });
 
-  const handleDownloadPdf = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    if (data === null || isGeneratingPdf) {
+      return;
+    }
+
+    const personalityClassGroup = getPersonalityClassGroupByTestScores(
+      data.testScores
+    );
+    const fileName = `MBTI-${personalityClassGroup.type}-${dayjs(
+      data.timestamp
+    ).format("YYYY-MM-DD")}`;
+
+    setIsGeneratingPdf(true);
+    setPdfError(null);
+
+    try {
+      await downloadReportPdf(fileName);
+    } catch {
+      // 自动生成失败时退回浏览器打印，并把原因明确告诉用户
+      setPdfError("自动生成失败，已切换为打印方式：在打印窗口选择「另存为 PDF」");
+      window.print();
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (
@@ -93,6 +121,9 @@ export default function TestResultPage() {
               <Button
                 colorScheme="primary"
                 onClick={handleDownloadPdf}
+                isLoading={isGeneratingPdf}
+                loadingText="正在生成 PDF"
+                isDisabled={isGeneratingPdf}
               >
                 下载 PDF 报告
               </Button>
@@ -102,10 +133,12 @@ export default function TestResultPage() {
                 bg="white"
                 rounded="md"
                 fontSize="xs"
-                color="gray.600"
+                color={pdfError ? "red.500" : "gray.600"}
                 boxShadow="sm"
               >
-                在打印窗口选择「另存为 PDF」
+                {isGeneratingPdf
+                  ? "正在排版，稍等几秒…"
+                  : pdfError ?? "点击后自动下载 PDF"}
               </Text>
             </Flex>
           )}
